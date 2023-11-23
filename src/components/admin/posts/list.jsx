@@ -10,34 +10,71 @@ import Button from 'react-bootstrap/Button';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import HeaderComponent from '../header/header';
+import Pagination from 'react-bootstrap/Pagination';
 
 
 function NoteListComponent() {
- 
+let items = [];
+
   const token = localStorage.getItem("jwt");
   const navigate = useNavigate();
+  const [pageNo, setPageNo] = useState(1);
 
   const [posts, setPosts] = useState([]);
+  const [total, setTotal] = useState([]);
+  const [nextpage, setNextpage] = useState([]);
+  const [prevpage, setPrevpage] = useState([]);
+
   const fetchPosts = async () => {
         try {
-          const response = await axios.get('http://155.138.136.68/api/posts');
+          const response = await axios.get(`http://155.138.136.68/api/posts?page=${pageNo}`);
 
           setPosts(response.data.data);
-          localStorage.setItem('isAuth', true);
+
+           // setTotal(  );
+           if( parseInt(response.data.total / response.data.per_page) > 1){
+              const numberOfTimes = parseInt(response.data.total / response.data.per_page) + 1; // Change this to the desired number of iterations
+
+           }else{
+             const numberOfTimes = 1
+           }
+
+          const numberOfTimes = parseInt(response.data.total / response.data.per_page) + 1; // Change this to the desired number of iterations
+
+          // Create an array with the desired length using Array.from
+          setTotal( Array.from({ length: numberOfTimes }, (_, index) => index));
+          if(response){
+            if(response.data.next_page_url !== null){
+                    const nexturlParams = new URL(response.data.next_page_url);
+                  setNextpage(nexturlParams.searchParams.get('page'));
+              }
+             
+           
+              if(response.data.prev_page_url !== null){
+                  const prevurlParams = new URL(response.data.prev_page_url);
+                  setPrevpage(prevurlParams.searchParams.get('page'));
+              }
+             
+
+          }
+         
 
         } catch (error) {
           console.error('Error fetching categories:', error.message);
-          if(error){
-            if(error.response.status === 401){
-     localStorage.removeItem('jwt')
-            localStorage.removeItem('isAuth');
+        //  if(error){
+     //        if(error.response.status === 401){
+     // localStorage.removeItem('jwt')
+     //        localStorage.removeItem('isAuth');
 
-                          navigate(`/login`, { replace: true })
-            }
+     //                      navigate(`/login`, { replace: true })
+     //        }
 
-          }
+      //    }
         }
   };
+
+
+
 
 
     const handleDeleteCategory = async (postId) => {
@@ -62,7 +99,7 @@ function NoteListComponent() {
 
  useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [pageNo]);
 
 
 
@@ -102,10 +139,35 @@ function NoteListComponent() {
               
             </div>
             </div>  
+
+
       ))} 
     
-      
+
+      <div className="d-block mx-auto" style={{"width":"200px"}}>
     
+    <Pagination className=" mx-auto">
+      {prevpage !== null ? 
+      <Pagination.Prev onClick={() => setPageNo(prevpage)} /> : ""
+      }
+
+ {total.map((item, index) => (
+         
+
+          <Pagination.Item onClick={() => setPageNo(index+1)} key={index+1}  active={index+1 == pageNo}>
+      {index + 1}
+    </Pagination.Item>
+
+        ))}
+  {nextpage !== null ? 
+      <Pagination.Next onClick={() => setPageNo(nextpage)} /> : ""
+      }
+
+             
+
+  </Pagination>
+
+    </div>  
 
        
 
